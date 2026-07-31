@@ -1,136 +1,182 @@
-from docx import Document
-from docx.shared import Pt
-from copy import deepcopy
 import os
+import shutil
 
-from config import CURRENT_WORD, TEMP_FOLDER
+from docx import Document
+
+from config import (
+    CURRENT_WORD,
+    TEMP_FOLDER
+)
+
+from utils import (
+    nome_arquivo
+)
 
 
-class WordManager:
 
-    def __init__(self):
-        self.document = None
-        self.table = None
+def preparar_pasta_temp():
 
-    def abrir(self):
-        self.document = Document(CURRENT_WORD)
+    if not os.path.exists(TEMP_FOLDER):
+        os.makedirs(TEMP_FOLDER)
 
-        for tabela in self.document.tables:
-            if len(tabela.rows) > 20:
-                self.table = tabela
-                break
 
-        if self.table is None:
-            raise Exception("Tabela da folha de ponto não encontrada.")
 
-    def salvar(self, nome_arquivo):
-        os.makedirs(TEMP_FOLDER, exist_ok=True)
+def criar_copia_folha():
 
-        caminho = os.path.join(
-            TEMP_FOLDER,
-            nome_arquivo
+    preparar_pasta_temp()
+
+    destino = os.path.join(
+        TEMP_FOLDER,
+        nome_arquivo()
+    )
+
+    shutil.copy(
+        CURRENT_WORD,
+        destino
+    )
+
+    return destino
+
+
+
+def abrir_documento(caminho):
+
+    documento = Document(
+        caminho
+    )
+
+    return documento
+
+
+
+def encontrar_tabela(documento):
+
+    if not documento.tables:
+        return None
+
+    return documento.tables[0]
+
+
+
+def preencher_celula(
+        tabela,
+        linha,
+        coluna,
+        valor
+):
+
+    try:
+
+        tabela.cell(
+            linha,
+            coluna
+        ).text = valor
+
+    except Exception:
+
+        pass
+
+
+
+def preencher_registros(
+        caminho,
+        registros
+):
+
+    documento = abrir_documento(
+        caminho
+    )
+
+    tabela = encontrar_tabela(
+        documento
+    )
+
+
+    if tabela is None:
+
+        documento.save(
+            caminho
         )
-
-        self.document.save(caminho)
 
         return caminho
 
-    def localizar_linha(self, dia):
 
-        for row in self.table.rows:
 
-            texto = row.cells[0].text.strip()
+    for registro in registros:
 
-            if texto == f"{dia:02d}":
-                return row
+        tipo = registro["tipo"]
 
-        return None
-    def escrever(self, celula, texto):
-        """
-        Escreve um texto na célula preservando a formatação básica.
-        """
-        celula.text = str(texto)
+        horario = registro["horario"]
 
-        for paragrafo in celula.paragraphs:
-            for run in paragrafo.runs:
-                run.font.size = Pt(10)
 
-    def preencher_dia(
-        self,
-        dia,
-        entrada="",
-        intervalo_inicio="",
-        intervalo_fim="",
-        saida=""
-    ):
-        """
-        Preenche os horários de um determinado dia.
-        """
 
-        linha = self.localizar_linha(dia)
+        if tipo == "entrada":
 
-        if linha is None:
-            raise Exception(f"Dia {dia:02d} não encontrado na folha.")
-
-        # Colunas da tabela
-        # 2 = Entrada
-        # 3 = Início intervalo
-        # 4 = Fim intervalo
-        # 5 = Saída
-
-        self.escrever(linha.cells[2], entrada)
-        self.escrever(linha.cells[3], intervalo_inicio)
-        self.escrever(linha.cells[4], intervalo_fim)
-        self.escrever(linha.cells[5], saida)
-
-    def limpar_dia(self, dia):
-        linha = self.localizar_linha(dia)
-
-        if linha is None:
-            return
-
-        for coluna in range(2, 6):
-            self.escrever(linha.cells[coluna], "")    def preencher_varios_dias(self, registros):
-        """
-        Preenche vários dias de uma só vez.
-
-        registros = {
-            1: {
-                "entrada": "08:00",
-                "intervalo_inicio": "12:00",
-                "intervalo_fim": "13:00",
-                "saida": "17:30"
-            },
-            2: {
-                ...
-            }
-        }
-        """
-
-        for dia, dados in registros.items():
-
-            self.preencher_dia(
-                int(dia),
-                dados.get("entrada", ""),
-                dados.get("intervalo_inicio", ""),
-                dados.get("intervalo_fim", ""),
-                dados.get("saida", "")
+            preencher_celula(
+                tabela,
+                1,
+                1,
+                horario
             )
 
-    def carregar_modelo(self):
-        """
-        Carrega novamente o modelo original da folha.
-        """
 
-        self.abrir()
+        elif tipo == "inicio":
 
-    def gerar_folha(self, registros, nome_saida):
-        """
-        Gera uma folha preenchida.
-        """
+            preencher_celula(
+                tabela,
+                1,
+                2,
+                horario
+            )
 
-        self.carregar_modelo()
 
-        self.preencher_varios_dias(registros)
+        elif tipo == "fim":
 
-        return self.salvar(nome_saida)
+            preencher_celula(
+                tabela,
+                1,
+                3,
+                horario
+            )
+
+
+        elif tipo == "saida":
+
+            preencher_celula(
+                tabela,
+                1,
+                4,
+                horario
+            )
+
+
+
+    documento.save(
+        caminho
+    )
+
+
+    return caminho
+
+
+
+def gerar_folha(registros):
+
+    arquivo = criar_copia_folha()
+
+
+    preencher_registros(
+        arquivo,
+        registros
+    )
+
+
+    return arquivo
+
+
+
+def verificar_modelo():
+
+    return os.path.exists(
+        CURRENT_WORD
+    )
