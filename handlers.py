@@ -9,6 +9,7 @@ from database import (
 )
 
 from calculations import calcular_horas
+from word_manager import gerar_folha
 
 
 async def entrada(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -137,6 +138,7 @@ async def hoje(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
+
 async def ajuda(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     texto = """
@@ -163,3 +165,32 @@ Gera folha de ponto
 """
 
     await update.message.reply_text(texto)
+
+
+
+async def folha(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    registros = obter_registros_do_dia()
+
+
+    if not registros:
+
+        await update.message.reply_text(
+            "Nenhum registro encontrado hoje."
+        )
+
+        return
+
+
+    arquivo = gerar_folha(
+        registros
+    )
+
+
+    await update.message.reply_document(
+        document=open(
+            arquivo,
+            "rb"
+        ),
+        filename="folha.docx"
+    )
