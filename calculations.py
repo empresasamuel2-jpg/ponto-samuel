@@ -1,42 +1,89 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+
 
 
 def converter_hora(hora):
-    """
-    Converte uma string no formato HH:MM para um objeto datetime.
-    """
-    return datetime.strptime(hora, "%H:%M")
+
+    return datetime.strptime(
+        hora,
+        "%H:%M"
+    )
 
 
-def calcular_horas(entrada, saida, intervalo_inicio=None, intervalo_fim=None):
-    """
-    Calcula as horas trabalhadas.
 
-    entrada: "07:50"
-    saida: "17:30"
-    intervalo_inicio: "12:00" (opcional)
-    intervalo_fim: "13:00" (opcional)
-    """
+def calcular_horas(registros):
 
-    entrada = converter_hora(entrada)
-    saida = converter_hora(saida)
+    entrada = None
+    inicio = None
+    fim = None
+    saida = None
 
-    # Caso passe da meia-noite
-    if saida < entrada:
-        saida += timedelta(days=1)
 
-    total = saida - entrada
+    for registro in registros:
 
-    if intervalo_inicio and intervalo_fim:
-        inicio = converter_hora(intervalo_inicio)
-        fim = converter_hora(intervalo_fim)
+        tipo = registro["tipo"]
+        horario = registro["horario"]
 
-        if fim < inicio:
-            fim += timedelta(days=1)
 
-        total -= (fim - inicio)
+        if tipo == "entrada":
+            entrada = horario
+
+
+        elif tipo == "inicio":
+            inicio = horario
+
+
+        elif tipo == "fim":
+            fim = horario
+
+
+        elif tipo == "saida":
+            saida = horario
+
+
+
+    if not entrada or not saida:
+
+        return "Expediente incompleto"
+
+
+
+    inicio_trabalho = converter_hora(
+        entrada
+    )
+
+
+    fim_trabalho = converter_hora(
+        saida
+    )
+
+
+    total = (
+        fim_trabalho -
+        inicio_trabalho
+    )
+
+
+    if inicio and fim:
+
+        pausa = (
+            converter_hora(fim)
+            -
+            converter_hora(inicio)
+        )
+
+        total -= pausa
+
+
 
     horas = total.seconds // 3600
-    minutos = (total.seconds % 3600) // 60
 
-    return f"{horas:02d}:{minutos:02d}"
+    minutos = (
+        total.seconds % 3600
+    ) // 60
+
+
+    return (
+        f"{horas:02d}:"
+        f"{minutos:02d}"
+    )
