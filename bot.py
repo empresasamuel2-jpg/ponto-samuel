@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -6,34 +8,32 @@ from telegram.ext import (
 )
 
 from config import TOKEN
-
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "✅ Bot de Ponto iniciado com sucesso!\n\n"
-        "Comandos disponíveis:\n"
-        "/start\n"
+from database import (
+    registrar_horario,
+    obter_dia,
+)
+from calculations import calcular_horasasync def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    mensagem = (
+        "👋 Bem-vindo ao Bot de Ponto!\n\n"
+        "Comandos disponíveis:\n\n"
+        "/entrada HH:MM\n"
+        "/inicio HH:MM\n"
+        "/fim HH:MM\n"
+        "/saida HH:MM\n"
+        "/hoje\n"
+        "/folha\n"
         "/ajuda"
     )
 
+    await update.message.reply_text(mensagem)
+
 
 async def ajuda(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "Em desenvolvimento.\n"
-        "Em breve estarão disponíveis os comandos de registro de ponto."
+    await start(update, context)def data_atual():
+    agora = datetime.now()
+
+    return (
+        agora.year,
+        agora.month,
+        agora.day
     )
-
-
-def main():
-    app = Application.builder().token(TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("ajuda", ajuda))
-
-    print("Bot iniciado...")
-
-    app.run_polling()
-
-
-if __name__ == "__main__":
-    main()
