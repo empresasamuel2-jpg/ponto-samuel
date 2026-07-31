@@ -2,81 +2,113 @@ import json
 import os
 
 from config import DATABASE
+from utils import data_atual
+
 
 
 def iniciar():
+
+    pasta = os.path.dirname(DATABASE)
+
+
+    if not os.path.exists(pasta):
+        os.makedirs(pasta)
+
+
     if not os.path.exists(DATABASE):
-        with open(DATABASE, "w", encoding="utf-8") as f:
-            json.dump({}, f, indent=4, ensure_ascii=False)
+
+        with open(
+            DATABASE,
+            "w",
+            encoding="utf-8"
+        ) as arquivo:
+
+            json.dump(
+                {},
+                arquivo,
+                indent=4
+            )
+
 
 
 def carregar():
+
     iniciar()
 
-    with open(DATABASE, "r", encoding="utf-8") as f:
-        return json.load(f)
+    with open(
+        DATABASE,
+        "r",
+        encoding="utf-8"
+    ) as arquivo:
+
+        return json.load(arquivo)
+
 
 
 def salvar(dados):
-    with open(DATABASE, "w", encoding="utf-8") as f:
-        json.dump(dados, f, indent=4, ensure_ascii=False)
+
+    with open(
+        DATABASE,
+        "w",
+        encoding="utf-8"
+    ) as arquivo:
+
+        json.dump(
+            dados,
+            arquivo,
+            indent=4,
+            ensure_ascii=False
+        )
 
 
-def obter_mes(ano, mes):
+
+def registrar_horario(tipo, horario):
+
     dados = carregar()
 
-    ano = str(ano)
-    mes = f"{int(mes):02d}"
 
-    if ano not in dados:
-        dados[ano] = {}
+    data = data_atual()
 
-    if mes not in dados[ano]:
-        dados[ano][mes] = {}
-
-    salvar(dados)
-
-    return dados[ano][mes]
-
-
-def registrar_horario(ano, mes, dia, campo, horario):
-    dados = carregar()
-
-    ano = str(ano)
-    mes = f"{int(mes):02d}"
-    dia = f"{int(dia):02d}"
-
-    dados.setdefault(ano, {})
-    dados[ano].setdefault(mes, {})
-    dados[ano][mes].setdefault(dia, {})
-
-    dados[ano][mes][dia][campo] = horario
-
-    salvar(dados)
-
-
-def obter_dia(ano, mes, dia):
-    dados = carregar()
-
-    ano = str(ano)
-    mes = f"{int(mes):02d}"
-    dia = f"{int(dia):02d}"
-
-    return (
-        dados
-        .get(ano, {})
-        .get(mes, {})
-        .get(dia, {})
+    chave = (
+        f"{data[0]}-"
+        f"{data[1]:02d}-"
+        f"{data[2]:02d}"
     )
 
 
-def limpar_mes(ano, mes):
-    dados = carregar()
+    if chave not in dados:
 
-    ano = str(ano)
-    mes = f"{int(mes):02d}"
+        dados[chave] = []
 
-    if ano in dados and mes in dados[ano]:
-        dados[ano][mes] = {}
+
+    dados[chave].append(
+        {
+            "tipo": tipo,
+            "horario": horario
+        }
+    )
+
 
     salvar(dados)
+
+
+
+def obter_registros_do_dia():
+
+    dados = carregar()
+
+
+    data = data_atual()
+
+
+    chave = (
+        f"{data[0]}-"
+        f"{data[1]:02d}-"
+        f"{data[2]:02d}"
+    )
+
+
+    return dados.get(
+        chave,
+        []
+    )
