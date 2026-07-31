@@ -1,39 +1,82 @@
-from datetime import datetime
-
-from telegram import Update
 from telegram.ext import (
     Application,
-    CommandHandler,
-    ContextTypes,
+    CommandHandler
 )
 
 from config import TOKEN
-from database import (
-    registrar_horario,
-    obter_dia,
+
+from handlers import (
+    entrada,
+    inicio,
+    fim,
+    saida,
+    hoje,
+    ajuda
 )
-from calculations import calcular_horasasync def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    mensagem = (
-        "👋 Bem-vindo ao Bot de Ponto!\n\n"
-        "Comandos disponíveis:\n\n"
-        "/entrada HH:MM\n"
-        "/inicio HH:MM\n"
-        "/fim HH:MM\n"
-        "/saida HH:MM\n"
-        "/hoje\n"
-        "/folha\n"
-        "/ajuda"
+
+
+
+def main():
+
+    app = Application.builder().token(TOKEN).build()
+
+
+    app.add_handler(
+        CommandHandler(
+            "entrada",
+            entrada
+        )
     )
 
-    await update.message.reply_text(mensagem)
 
-
-async def ajuda(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await start(update, context)def data_atual():
-    agora = datetime.now()
-
-    return (
-        agora.year,
-        agora.month,
-        agora.day
+    app.add_handler(
+        CommandHandler(
+            "inicio",
+            inicio
+        )
     )
+
+
+    app.add_handler(
+        CommandHandler(
+            "fim",
+            fim
+        )
+    )
+
+
+    app.add_handler(
+        CommandHandler(
+            "saida",
+            saida
+        )
+    )
+
+
+    app.add_handler(
+        CommandHandler(
+            "hoje",
+            hoje
+        )
+    )
+
+
+    app.add_handler(
+        CommandHandler(
+            "ajuda",
+            ajuda
+        )
+    )
+
+
+    print(
+        "🤖 Bot de ponto iniciado..."
+    )
+
+
+    app.run_polling()
+
+
+
+if __name__ == "__main__":
+    main()
