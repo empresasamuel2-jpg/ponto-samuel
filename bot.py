@@ -11,8 +11,10 @@ from handlers import (
     fim,
     saida,
     hoje,
-    ajuda
+    ajuda,
+    folha
 )
+
 
 
 
@@ -67,7 +69,13 @@ def main():
             ajuda
         )
     )
-
+    
+    app.add_handler(
+        CommandHandler(
+            "folha",
+            folha
+        )
+    )
 
     print(
         "🤖 Bot de ponto iniciado..."
